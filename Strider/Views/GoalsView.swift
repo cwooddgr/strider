@@ -15,10 +15,11 @@ struct GoalsView: View {
                 ProgressView("Loading goals...")
 
             case .loaded(let weekly, let monthly, let yearly):
+                let isRolling = viewModel.settings.windowMode == .rolling
                 List {
                     Section {
                         GoalRow(
-                            title: "Weekly",
+                            title: isRolling ? "7-Day Rolling" : "Weekly",
                             progress: weekly,
                             goalMiles: viewModel.settings.weeklyGoalMiles
                         ) {
@@ -26,7 +27,7 @@ struct GoalsView: View {
                         }
 
                         GoalRow(
-                            title: "Monthly",
+                            title: isRolling ? "30-Day Rolling" : "Monthly",
                             progress: monthly,
                             goalMiles: viewModel.settings.monthlyGoalMiles
                         ) {
@@ -102,9 +103,12 @@ struct GoalsView: View {
                 currentMiles: currentMiles(for: goalType),
                 onSave: { newMiles in
                     setGoal(goalType, miles: newMiles)
-                }
+                },
+                onSaveAllFromYearly: goalType == .yearly ? { yearlyMiles in
+                    setAllGoalsFromYearly(yearlyMiles)
+                } : nil
             )
-            .presentationDetents([.height(200)])
+            .presentationDetents([.height(goalType == .yearly ? 280 : 200)])
         }
         .task {
             await viewModel.loadProgress()
@@ -124,6 +128,18 @@ struct GoalsView: View {
         case .weekly: viewModel.settings.weeklyGoalMiles = miles
         case .monthly: viewModel.settings.monthlyGoalMiles = miles
         case .yearly: viewModel.settings.yearlyGoalMiles = miles
+        }
+        viewModel.saveSettings()
+    }
+
+    private func setAllGoalsFromYearly(_ yearlyMiles: Double?) {
+        viewModel.settings.yearlyGoalMiles = yearlyMiles
+        if let yearly = yearlyMiles {
+            viewModel.settings.monthlyGoalMiles = yearly / 12
+            viewModel.settings.weeklyGoalMiles = yearly / 52
+        } else {
+            viewModel.settings.monthlyGoalMiles = nil
+            viewModel.settings.weeklyGoalMiles = nil
         }
         viewModel.saveSettings()
     }
@@ -207,10 +223,26 @@ struct EditGoalSheet: View {
     let goalType: GoalType
     let currentMiles: Double?
     let onSave: (Double?) -> Void
+    let onSaveAllFromYearly: ((Double?) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var milesText: String = ""
+    @State private var setAllGoals: Bool = false
     @FocusState private var isFocused: Bool
+
+    private var canSetAllGoals: Bool {
+        onSaveAllFromYearly != nil
+    }
+
+    private var calculatedMonthly: Double? {
+        guard let miles = Double(milesText) else { return nil }
+        return miles / 12
+    }
+
+    private var calculatedWeekly: Double? {
+        guard let miles = Double(milesText) else { return nil }
+        return miles / 52
+    }
 
     var body: some View {
         NavigationStack {
@@ -226,6 +258,16 @@ struct EditGoalSheet: View {
                 } footer: {
                     Text("Leave empty to remove the goal")
                 }
+
+                if canSetAllGoals {
+                    Section {
+                        Toggle("Also set weekly & monthly", isOn: $setAllGoals)
+                    } footer: {
+                        if setAllGoals, let monthly = calculatedMonthly, let weekly = calculatedWeekly {
+                            Text("Monthly: \(String(format: "%.1f", monthly)) mi · Weekly: \(String(format: "%.1f", weekly)) mi")
+                        }
+                    }
+                }
             }
             .navigationTitle("\(goalType.displayName) Goal")
             .navigationBarTitleDisplayMode(.inline)
@@ -237,8 +279,7 @@ struct EditGoalSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        onSave(Double(milesText))
-                        dismiss()
+                        save()
                     }
                 }
             }
@@ -247,6 +288,16 @@ struct EditGoalSheet: View {
                 isFocused = true
             }
         }
+    }
+
+    private func save() {
+        let miles = Double(milesText)
+        if setAllGoals, let saveAll = onSaveAllFromYearly {
+            saveAll(miles)
+        } else {
+            onSave(miles)
+        }
+        dismiss()
     }
 }
 
