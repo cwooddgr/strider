@@ -1,5 +1,7 @@
 # Strider
 
+![Strider](strider.png)
+
 A privacy-first iOS app that tracks your walking, hiking, and running distances from Apple HealthKit.
 
 ## Features
@@ -24,7 +26,7 @@ A privacy-first iOS app that tracks your walking, hiking, and running distances 
 
 2. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/strider.git
+   git clone https://github.com/cwooddgr/strider.git
    cd strider
    ```
 
