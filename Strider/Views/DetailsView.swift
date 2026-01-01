@@ -40,15 +40,12 @@ struct DetailsView: View {
             }
         }
         .navigationTitle("Details")
+        .toolbarTitleDisplayMode(.inlineLarge)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                VStack(spacing: 0) {
-                    Text("Details")
-                        .font(.headline)
-                    Text("Last 30 Days")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text("Last 30 Days")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
         }
         .task {
