@@ -2,7 +2,7 @@ import SwiftUI
 
 struct GoalsView: View {
     @State private var viewModel: GoalsViewModel
-    @State private var isEditingGoals = false
+    @State private var editingGoal: GoalType?
 
     init(healthKitClient: HealthKitClient) {
         _viewModel = State(wrappedValue: GoalsViewModel(healthKitClient: healthKitClient))
@@ -17,43 +17,63 @@ struct GoalsView: View {
             case .loaded(let weekly, let monthly, let yearly):
                 List {
                     Section {
-                        if let progress = weekly {
-                            GoalProgressRow(title: "Weekly", progress: progress)
-                        } else {
-                            NoGoalRow(title: "Weekly")
+                        GoalRow(
+                            title: "Weekly",
+                            progress: weekly,
+                            goalMiles: viewModel.settings.weeklyGoalMiles
+                        ) {
+                            editingGoal = .weekly
                         }
 
-                        if let progress = monthly {
-                            GoalProgressRow(title: "Monthly", progress: progress)
-                        } else {
-                            NoGoalRow(title: "Monthly")
+                        GoalRow(
+                            title: "Monthly",
+                            progress: monthly,
+                            goalMiles: viewModel.settings.monthlyGoalMiles
+                        ) {
+                            editingGoal = .monthly
                         }
 
-                        if let progress = yearly {
-                            GoalProgressRow(title: "Yearly", progress: progress)
-                        } else {
-                            NoGoalRow(title: "Yearly")
+                        GoalRow(
+                            title: "Yearly",
+                            progress: yearly,
+                            goalMiles: viewModel.settings.yearlyGoalMiles
+                        ) {
+                            editingGoal = .yearly
                         }
                     } header: {
-                        Text("Progress")
+                        Text("Goals")
+                    } footer: {
+                        Text("Tap a goal to edit")
                     }
 
                     Section {
-                        HStack {
-                            Text("Window Mode")
-                            Spacer()
-                            Text(viewModel.settings.windowMode.displayName)
-                                .foregroundStyle(.secondary)
+                        Picker("Window Mode", selection: Binding(
+                            get: { viewModel.settings.windowMode },
+                            set: { newValue in
+                                viewModel.settings.windowMode = newValue
+                                viewModel.saveSettings()
+                            }
+                        )) {
+                            ForEach(WindowMode.allCases, id: \.self) { mode in
+                                Text(mode.displayName).tag(mode)
+                            }
                         }
 
-                        HStack {
-                            Text("Week Starts")
-                            Spacer()
-                            Text(viewModel.settings.weekStart.displayName)
-                                .foregroundStyle(.secondary)
+                        Picker("Week Starts On", selection: Binding(
+                            get: { viewModel.settings.weekStart },
+                            set: { newValue in
+                                viewModel.settings.weekStart = newValue
+                                viewModel.saveSettings()
+                            }
+                        )) {
+                            ForEach(WeekStart.allCases, id: \.self) { day in
+                                Text(day.displayName).tag(day)
+                            }
                         }
                     } header: {
                         Text("Settings")
+                    } footer: {
+                        Text(viewModel.settings.windowMode.description)
                     }
                 }
                 .refreshable {
@@ -76,147 +96,138 @@ struct GoalsView: View {
             }
         }
         .navigationTitle("Goals")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") {
-                    isEditingGoals = true
+        .sheet(item: $editingGoal) { goalType in
+            EditGoalSheet(
+                goalType: goalType,
+                currentMiles: currentMiles(for: goalType),
+                onSave: { newMiles in
+                    setGoal(goalType, miles: newMiles)
                 }
-            }
-        }
-        .sheet(isPresented: $isEditingGoals) {
-            EditGoalsView(settings: $viewModel.settings) {
-                viewModel.saveSettings()
-            }
+            )
+            .presentationDetents([.height(200)])
         }
         .task {
             await viewModel.loadProgress()
         }
     }
-}
 
-/// Row showing progress toward a goal.
-struct GoalProgressRow: View {
-    let title: String
-    let progress: GoalProgress
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(.headline)
-                Spacer()
-                if progress.isComplete {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
-            }
-
-            ProgressView(value: progress.progress)
-                .tint(progress.isComplete ? .green : .accentColor)
-
-            HStack {
-                Text(String(format: "%.1f / %.1f miles", progress.currentMiles, progress.goalMiles))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                if !progress.isComplete {
-                    Text(String(format: "%.1f to go", progress.remainingMiles))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
+    private func currentMiles(for goalType: GoalType) -> Double? {
+        switch goalType {
+        case .weekly: return viewModel.settings.weeklyGoalMiles
+        case .monthly: return viewModel.settings.monthlyGoalMiles
+        case .yearly: return viewModel.settings.yearlyGoalMiles
         }
-        .padding(.vertical, 4)
+    }
+
+    private func setGoal(_ goalType: GoalType, miles: Double?) {
+        switch goalType {
+        case .weekly: viewModel.settings.weeklyGoalMiles = miles
+        case .monthly: viewModel.settings.monthlyGoalMiles = miles
+        case .yearly: viewModel.settings.yearlyGoalMiles = miles
+        }
+        viewModel.saveSettings()
     }
 }
 
-/// Row shown when no goal is set.
-struct NoGoalRow: View {
-    let title: String
+/// Identifies which goal is being edited.
+enum GoalType: String, Identifiable {
+    case weekly, monthly, yearly
 
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.headline)
-            Spacer()
-            Text("No goal set")
-                .foregroundStyle(.tertiary)
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .weekly: return "Weekly"
+        case .monthly: return "Monthly"
+        case .yearly: return "Yearly"
         }
-        .padding(.vertical, 4)
     }
 }
 
-/// Sheet for editing goal settings.
-struct EditGoalsView: View {
+/// Row showing a goal with optional progress.
+struct GoalRow: View {
+    let title: String
+    let progress: GoalProgress?
+    let goalMiles: Double?
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    if let progress, progress.isComplete {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    } else if goalMiles != nil {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+
+                if let progress {
+                    ProgressView(value: progress.progress)
+                        .tint(progress.isComplete ? .green : .accentColor)
+
+                    HStack {
+                        Text(String(format: "%.1f / %.1f miles", progress.currentMiles, progress.goalMiles))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        if !progress.isComplete {
+                            Text(String(format: "%.1f to go", progress.remainingMiles))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    HStack {
+                        Text("No goal set")
+                            .font(.subheadline)
+                            .foregroundStyle(.tertiary)
+                        Spacer()
+                        Text("Tap to set")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+            }
+            .padding(.vertical, 4)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Sheet for editing a single goal.
+struct EditGoalSheet: View {
+    let goalType: GoalType
+    let currentMiles: Double?
+    let onSave: (Double?) -> Void
+
     @Environment(\.dismiss) private var dismiss
-    @Binding var settings: GoalSettings
-    let onSave: () -> Void
-
-    @State private var weeklyMiles: String = ""
-    @State private var monthlyMiles: String = ""
-    @State private var yearlyMiles: String = ""
+    @State private var milesText: String = ""
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     HStack {
-                        Text("Weekly")
-                        Spacer()
-                        TextField("miles", text: $weeklyMiles)
+                        TextField("Goal", text: $milesText)
                             .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                        Text("mi")
+                            .focused($isFocused)
+                        Text("miles")
                             .foregroundStyle(.secondary)
                     }
-
-                    HStack {
-                        Text("Monthly")
-                        Spacer()
-                        TextField("miles", text: $monthlyMiles)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                        Text("mi")
-                            .foregroundStyle(.secondary)
-                    }
-
-                    HStack {
-                        Text("Yearly")
-                        Spacer()
-                        TextField("miles", text: $yearlyMiles)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                        Text("mi")
-                            .foregroundStyle(.secondary)
-                    }
-                } header: {
-                    Text("Distance Goals")
                 } footer: {
-                    Text("Leave blank to disable a goal.")
-                }
-
-                Section {
-                    Picker("Window Mode", selection: $settings.windowMode) {
-                        ForEach(WindowMode.allCases, id: \.self) { mode in
-                            Text(mode.displayName).tag(mode)
-                        }
-                    }
-
-                    Picker("Week Starts On", selection: $settings.weekStart) {
-                        ForEach(WeekStart.allCases, id: \.self) { day in
-                            Text(day.displayName).tag(day)
-                        }
-                    }
-                } header: {
-                    Text("Settings")
-                } footer: {
-                    Text(settings.windowMode.description)
+                    Text("Leave empty to remove the goal")
                 }
             }
-            .navigationTitle("Edit Goals")
+            .navigationTitle("\(goalType.displayName) Goal")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -226,28 +237,16 @@ struct EditGoalsView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        saveAndDismiss()
+                        onSave(Double(milesText))
+                        dismiss()
                     }
                 }
             }
             .onAppear {
-                loadCurrentValues()
+                milesText = currentMiles.map { String(format: "%.0f", $0) } ?? ""
+                isFocused = true
             }
         }
-    }
-
-    private func loadCurrentValues() {
-        weeklyMiles = settings.weeklyGoalMiles.map { String(format: "%.0f", $0) } ?? ""
-        monthlyMiles = settings.monthlyGoalMiles.map { String(format: "%.0f", $0) } ?? ""
-        yearlyMiles = settings.yearlyGoalMiles.map { String(format: "%.0f", $0) } ?? ""
-    }
-
-    private func saveAndDismiss() {
-        settings.weeklyGoalMiles = Double(weeklyMiles)
-        settings.monthlyGoalMiles = Double(monthlyMiles)
-        settings.yearlyGoalMiles = Double(yearlyMiles)
-        onSave()
-        dismiss()
     }
 }
 
