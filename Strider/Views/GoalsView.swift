@@ -23,7 +23,8 @@ struct GoalsView: View {
                             title: isRolling ? "7-Day Rolling" : "Weekly",
                             progress: weekly,
                             goalValue: viewModel.settings.weeklyGoalInUnit,
-                            unit: unit
+                            unit: unit,
+                            iconName: GoalType.weekly.iconName
                         ) {
                             editingGoal = .weekly
                         }
@@ -32,7 +33,8 @@ struct GoalsView: View {
                             title: isRolling ? "30-Day Rolling" : "Monthly",
                             progress: monthly,
                             goalValue: viewModel.settings.monthlyGoalInUnit,
-                            unit: unit
+                            unit: unit,
+                            iconName: GoalType.monthly.iconName
                         ) {
                             editingGoal = .monthly
                         }
@@ -41,7 +43,8 @@ struct GoalsView: View {
                             title: "Yearly",
                             progress: yearly,
                             goalValue: viewModel.settings.yearlyGoalInUnit,
-                            unit: unit
+                            unit: unit,
+                            iconName: GoalType.yearly.iconName
                         ) {
                             editingGoal = .yearly
                         }
@@ -164,6 +167,14 @@ enum GoalType: String, Identifiable {
         case .yearly: return "Yearly"
         }
     }
+
+    var iconName: String {
+        switch self {
+        case .weekly: return "7.circle"
+        case .monthly: return "calendar"
+        case .yearly: return "star.circle.fill"
+        }
+    }
 }
 
 /// Row showing a goal with optional progress.
@@ -172,50 +183,58 @@ struct GoalRow: View {
     let progress: GoalProgress?
     let goalValue: Double?
     let unit: DistanceUnit
+    let iconName: String
     let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    if let progress, progress.isComplete {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                    } else if goalValue != nil {
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
+            HStack(spacing: 12) {
+                Image(systemName: iconName)
+                    .font(.title2)
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 32)
 
-                if let progress {
-                    ProgressView(value: progress.progress)
-                        .tint(progress.isComplete ? .green : .accentColor)
-
+                VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text(String(format: "%.1f / %.1f %@", progress.displayCurrent(in: unit), progress.displayGoal(in: unit), unit.abbreviation))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Text(title)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
                         Spacer()
-                        if !progress.isComplete {
-                            Text(String(format: "%.1f to go", progress.displayRemaining(in: unit)))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                        if let progress, progress.isComplete {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        } else if goalValue != nil {
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
                         }
                     }
-                } else {
-                    HStack {
-                        Text("No goal set")
-                            .font(.subheadline)
-                            .foregroundStyle(.tertiary)
-                        Spacer()
-                        Text("Tap to set")
-                            .font(.subheadline)
-                            .foregroundStyle(Color.accentColor)
+
+                    if let progress {
+                        ProgressView(value: progress.progress)
+                            .tint(progress.isComplete ? .green : .accentColor)
+
+                        HStack {
+                            Text(String(format: "%.1f / %.1f %@", progress.displayCurrent(in: unit), progress.displayGoal(in: unit), unit.abbreviation))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            if !progress.isComplete {
+                                Text(String(format: "%.1f to go", progress.displayRemaining(in: unit)))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } else {
+                        HStack {
+                            Text("No goal set")
+                                .font(.subheadline)
+                                .foregroundStyle(.tertiary)
+                            Spacer()
+                            Text("Tap to set")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.accentColor)
+                        }
                     }
                 }
             }

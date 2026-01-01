@@ -23,6 +23,7 @@ struct DashboardView: View {
                                     title: type.displayName,
                                     distance: summary.distance(for: type, in: unit),
                                     unit: unit,
+                                    iconName: type.iconName,
                                     isYTD: viewModel.isCurrentYear
                                 )
                             }
@@ -34,6 +35,7 @@ struct DashboardView: View {
                                 title: "Total",
                                 distance: summary.totalDistance(in: unit),
                                 unit: unit,
+                                iconName: "figure.walk.motion",
                                 isTotal: true,
                                 isYTD: viewModel.isCurrentYear
                             )
@@ -98,23 +100,35 @@ struct DistanceCard: View {
     let title: String
     let distance: Double
     let unit: DistanceUnit
+    var iconName: String? = nil
     var isTotal: Bool = false
     var isYTD: Bool = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(isTotal ? .headline : .subheadline)
-                .foregroundStyle(.secondary)
+        HStack(spacing: 16) {
+            if let iconName {
+                Image(systemName: iconName)
+                    .font(isTotal ? .largeTitle : .title)
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 44)
+            }
 
-            Text(formattedDistance)
-                .font(isTotal ? .largeTitle : .title)
-                .fontWeight(.bold)
-                .contentTransition(.numericText())
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(isTotal ? .headline : .subheadline)
+                    .foregroundStyle(.secondary)
 
-            Text(isYTD ? "\(unit.abbreviation) YTD" : unit.abbreviation)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                Text(formattedDistance)
+                    .font(isTotal ? .largeTitle : .title)
+                    .fontWeight(.bold)
+                    .contentTransition(.numericText())
+
+                Text(isYTD ? "\(unit.abbreviation) YTD" : unit.abbreviation)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+
+            Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
