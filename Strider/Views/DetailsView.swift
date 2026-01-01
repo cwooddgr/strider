@@ -40,14 +40,6 @@ struct DetailsView: View {
             }
         }
         .navigationTitle("Details")
-        .toolbarTitleDisplayMode(.inlineLarge)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Last 30 Days")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
         .task {
             await viewModel.load()
         }
@@ -55,6 +47,15 @@ struct DetailsView: View {
 
     private func workoutsList(_ workouts: [Workout]) -> some View {
         List {
+            Section {
+                EmptyView()
+            } header: {
+                Text("Last 30 Days")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .textCase(nil)
+            }
+
             ForEach(viewModel.workoutsByDay(workouts), id: \.date) { group in
                 Section(viewModel.sectionHeader(for: group.date)) {
                     ForEach(group.workouts) { workout in
