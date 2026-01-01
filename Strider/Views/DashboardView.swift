@@ -20,7 +20,8 @@ struct DashboardView: View {
                             ForEach(WorkoutType.allCases, id: \.self) { type in
                                 DistanceCard(
                                     title: type.displayName,
-                                    miles: summary.miles(for: type)
+                                    miles: summary.miles(for: type),
+                                    isYTD: viewModel.isCurrentYear
                                 )
                             }
 
@@ -30,7 +31,8 @@ struct DashboardView: View {
                             DistanceCard(
                                 title: "Total",
                                 miles: summary.totalMiles,
-                                isTotal: true
+                                isTotal: true,
+                                isYTD: viewModel.isCurrentYear
                             )
                         }
                         .padding()
@@ -55,6 +57,32 @@ struct DashboardView: View {
                 }
             }
             .navigationTitle("Strider")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        ForEach(viewModel.availableYears, id: \.self) { year in
+                            Button {
+                                viewModel.selectedYear = year
+                            } label: {
+                                HStack {
+                                    Text(String(year))
+                                    if year == viewModel.selectedYear {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(String(viewModel.selectedYear))
+                                .fontWeight(.medium)
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
+                        }
+                    }
+                    .disabled(viewModel.availableYears.isEmpty)
+                }
+            }
             .task {
                 await viewModel.load()
             }
@@ -67,6 +95,7 @@ struct DistanceCard: View {
     let title: String
     let miles: Double
     var isTotal: Bool = false
+    var isYTD: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -79,7 +108,7 @@ struct DistanceCard: View {
                 .fontWeight(.bold)
                 .contentTransition(.numericText())
 
-            Text("miles YTD")
+            Text(isYTD ? "miles YTD" : "miles")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
@@ -108,5 +137,9 @@ private final class PreviewHealthKitClient: HealthKitClient, @unchecked Sendable
             Workout(type: .hike, distanceMeters: 48280.32, startDate: Date()),  // 30 miles
             Workout(type: .run, distanceMeters: 80467.2, startDate: Date())     // 50 miles
         ]
+    }
+
+    func fetchAvailableYears(types: Set<WorkoutType>) async throws -> [Int] {
+        [2025, 2024, 2023, 2022]
     }
 }

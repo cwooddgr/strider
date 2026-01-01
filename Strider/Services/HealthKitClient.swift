@@ -8,6 +8,9 @@ protocol HealthKitClient: Sendable {
 
     /// Fetches workouts within the given date range for the specified types.
     func fetchWorkouts(from startDate: Date, to endDate: Date, types: Set<WorkoutType>) async throws -> [Workout]
+
+    /// Fetches all years that have workout data for the specified types.
+    func fetchAvailableYears(types: Set<WorkoutType>) async throws -> [Int]
 }
 
 /// Errors that can occur during HealthKit operations.
@@ -85,6 +88,44 @@ final class LiveHealthKitClient: HealthKitClient, @unchecked Sendable {
                     .compactMap { Workout(healthKitWorkout: $0) }
 
                 continuation.resume(returning: workouts)
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
+    func fetchAvailableYears(types: Set<WorkoutType>) async throws -> [Int] {
+        let workoutType = HKObjectType.workoutType()
+
+        // Build predicate for activity types only (no date filter)
+        let activityTypes = types.flatMap { $0.healthKitActivityTypes }
+        let activityPredicates = activityTypes.map { activityType in
+            HKQuery.predicateForWorkouts(with: activityType)
+        }
+        let predicate = NSCompoundPredicate(orPredicateWithSubpredicates: activityPredicates)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: workoutType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, error in
+                if let error = error {
+                    continuation.resume(throwing: HealthKitError.queryFailed(error))
+                    return
+                }
+
+                let calendar = Calendar.current
+                let years = (samples as? [HKWorkout] ?? [])
+                    .compactMap { workout -> Int? in
+                        // Only include workouts that have distance
+                        guard workout.totalDistance != nil else { return nil }
+                        return calendar.component(.year, from: workout.startDate)
+                    }
+
+                let uniqueYears = Array(Set(years)).sorted(by: >)  // Most recent first
+                continuation.resume(returning: uniqueYears)
             }
 
             healthStore.execute(query)

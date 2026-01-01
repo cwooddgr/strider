@@ -12,23 +12,64 @@ enum DashboardState: Equatable {
 @Observable
 final class DashboardViewModel {
     private(set) var state: DashboardState = .loading
+    private(set) var availableYears: [Int] = []
+    var selectedYear: Int {
+        didSet {
+            if oldValue != selectedYear {
+                Task { await loadWorkouts() }
+            }
+        }
+    }
 
     private let healthKitClient: HealthKitClient
     private let aggregator: DistanceAggregator
 
+    /// Returns true if the selected year is the current year (showing YTD data).
+    var isCurrentYear: Bool {
+        selectedYear == Calendar.current.component(.year, from: Date())
+    }
+
     init(healthKitClient: HealthKitClient, aggregator: DistanceAggregator = DistanceAggregator()) {
         self.healthKitClient = healthKitClient
         self.aggregator = aggregator
+        self.selectedYear = Calendar.current.component(.year, from: Date())
     }
 
-    /// Loads YTD workout data from HealthKit.
+    /// Loads available years and workout data from HealthKit.
     func load() async {
         state = .loading
 
         do {
             try await healthKitClient.requestAuthorization()
 
-            let (start, end) = aggregator.ytdDateRange()
+            let allTypes = Set(WorkoutType.allCases)
+            let years = try await healthKitClient.fetchAvailableYears(types: allTypes)
+
+            // Ensure current year is always available, even if no workouts yet
+            let currentYear = Calendar.current.component(.year, from: Date())
+            if !years.contains(currentYear) {
+                availableYears = [currentYear] + years
+            } else {
+                availableYears = years
+            }
+
+            // If selected year isn't in available years, reset to current year
+            if !availableYears.contains(selectedYear) {
+                selectedYear = currentYear
+            }
+
+            await loadWorkouts()
+        } catch {
+            state = .error(error.localizedDescription)
+        }
+    }
+
+    /// Loads workout data for the selected year.
+    private func loadWorkouts() async {
+        state = .loading
+
+        do {
+            let (start, end) = aggregator.dateRange(for: selectedYear)
             let allTypes = Set(WorkoutType.allCases)
 
             let workouts = try await healthKitClient.fetchWorkouts(from: start, to: end, types: allTypes)

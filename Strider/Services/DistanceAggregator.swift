@@ -25,6 +25,33 @@ struct DistanceAggregator {
         return (start: startOfYear, end: now)
     }
 
+    /// Returns the date range for a specific year.
+    /// If the year is the current year, returns YTD (Jan 1 to now).
+    /// Otherwise returns the full year (Jan 1 to Dec 31).
+    func dateRange(for year: Int, now: Date = Date()) -> (start: Date, end: Date) {
+        let currentYear = calendar.component(.year, from: now)
+
+        var startComponents = DateComponents()
+        startComponents.year = year
+        startComponents.month = 1
+        startComponents.day = 1
+        let startOfYear = calendar.date(from: startComponents)!
+
+        if year == currentYear {
+            return (start: startOfYear, end: now)
+        } else {
+            var endComponents = DateComponents()
+            endComponents.year = year
+            endComponents.month = 12
+            endComponents.day = 31
+            endComponents.hour = 23
+            endComponents.minute = 59
+            endComponents.second = 59
+            let endOfYear = calendar.date(from: endComponents)!
+            return (start: startOfYear, end: endOfYear)
+        }
+    }
+
     /// Returns the date range for the current calendar week.
     func currentWeekDateRange(from now: Date = Date(), weekStartsOn: Weekday = .sunday) -> (start: Date, end: Date) {
         var cal = calendar
