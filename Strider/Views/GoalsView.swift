@@ -60,15 +60,17 @@ struct GoalsView: View {
                             }
                         }
 
-                        Picker("Week Starts On", selection: Binding(
-                            get: { viewModel.settings.weekStart },
-                            set: { newValue in
-                                viewModel.settings.weekStart = newValue
-                                viewModel.saveSettings()
-                            }
-                        )) {
-                            ForEach(WeekStart.allCases, id: \.self) { day in
-                                Text(day.displayName).tag(day)
+                        if viewModel.settings.windowMode == .calendar {
+                            Picker("Week Starts On", selection: Binding(
+                                get: { viewModel.settings.weekStart },
+                                set: { newValue in
+                                    viewModel.settings.weekStart = newValue
+                                    viewModel.saveSettings()
+                                }
+                            )) {
+                                ForEach(WeekStart.allCases, id: \.self) { day in
+                                    Text(day.displayName).tag(day)
+                                }
                             }
                         }
                     } header: {
