@@ -1,6 +1,6 @@
-# Strider
+# Worn Soles
 
-![Strider](strider.png)
+![Worn Soles](strider.png)
 
 A privacy-first iOS app that tracks your walking, hiking, and running distances from Apple HealthKit.
 
