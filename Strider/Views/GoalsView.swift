@@ -76,29 +76,6 @@ struct GoalsView: View {
                             }
                         }
 
-                        Picker("Units", selection: Binding(
-                            get: { viewModel.settings.distanceUnit },
-                            set: { newValue in
-                                viewModel.settings.distanceUnit = newValue
-                                viewModel.saveSettings()
-                            }
-                        )) {
-                            ForEach(DistanceUnit.allCases, id: \.self) { unit in
-                                Text(unit.displayName).tag(unit)
-                            }
-                        }
-
-                        Picker("Appearance", selection: Binding(
-                            get: { viewModel.settings.appearanceMode },
-                            set: { newValue in
-                                viewModel.settings.appearanceMode = newValue
-                                viewModel.saveSettings()
-                            }
-                        )) {
-                            ForEach(AppearanceMode.allCases, id: \.self) { mode in
-                                Text(mode.displayName).tag(mode)
-                            }
-                        }
                     } header: {
                         Text("Settings")
                     } footer: {

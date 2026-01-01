@@ -36,6 +36,13 @@ struct StriderApp: App {
                 .tabItem {
                     Label("Details", systemImage: "list.bullet")
                 }
+
+                NavigationStack {
+                    SettingsView()
+                }
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
             }
             .preferredColorScheme(colorScheme)
         }
