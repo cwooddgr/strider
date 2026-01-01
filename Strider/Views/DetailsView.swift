@@ -39,7 +39,18 @@ struct DetailsView: View {
                 }
             }
         }
-        .navigationTitle("Last 30 Days")
+        .navigationTitle("Details")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: 0) {
+                    Text("Details")
+                        .font(.headline)
+                    Text("Last 30 Days")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
         .task {
             await viewModel.load()
         }
