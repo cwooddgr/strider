@@ -18,7 +18,7 @@ struct DetailsView: View {
                     ContentUnavailableView {
                         Label("No Workouts", systemImage: "figure.walk")
                     } description: {
-                        Text("No walk, hike, or run workouts in the last 30 days")
+                        Text("No walk, hike, or run workouts found")
                     }
                 } else {
                     workoutsList(workouts)
@@ -39,7 +39,7 @@ struct DetailsView: View {
                 }
             }
         }
-        .navigationTitle("Details")
+        .navigationTitle("Last 30 Days")
         .task {
             await viewModel.load()
         }
