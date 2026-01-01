@@ -6,10 +6,30 @@ A privacy-first iOS app that tracks your walking, hiking, and running distances 
 
 ## Features
 
-- **YTD Distance Totals** - See your year-to-date miles for walking, hiking, and running
-- **HealthKit Integration** - Reads workout data directly from Apple Health
-- **Privacy-First** - All data stays on your device
-- **Clean Interface** - Simple dashboard focused on the metrics that matter
+### Summary
+- Year-to-date distance totals for walking, hiking, and running
+- Year selector to view historical data
+- Combined total across all workout types
+
+### Goals
+- Set weekly, monthly, and yearly distance goals
+- Track progress with visual progress bars
+- Choose between calendar-aligned or rolling window modes
+- Configurable week start day (Sunday/Monday)
+
+### Details
+- Recent workouts from the last 30 days
+- Grouped by date with time and distance
+- Pull-to-refresh for latest data
+
+### Settings
+- Switch between miles and kilometers
+- Light, dark, or system appearance mode
+
+### Privacy
+- All data stays on your device
+- Read-only HealthKit access
+- No accounts, no cloud sync
 
 ## Requirements
 
@@ -56,11 +76,11 @@ xcodebuild -scheme Strider -destination 'platform=iOS Simulator,name=iPhone 17' 
 
 The app follows MVVM with a service layer:
 
-- **Models** - `WorkoutType`, `Workout`, `DistanceSummary`
-- **Services** - `HealthKitClient` (protocol + live implementation), `DistanceAggregator`
+- **Models** - `WorkoutType`, `Workout`, `DistanceSummary`, `GoalSettings`
+- **Services** - `HealthKitClient`, `DistanceAggregator`, `GoalStore`
 - **Views** - SwiftUI views with `@Observable` ViewModels
 
-All HealthKit access is abstracted behind protocols for testability.
+All HealthKit access is abstracted behind protocols for testability. Settings are persisted via UserDefaults.
 
 ## License
 
