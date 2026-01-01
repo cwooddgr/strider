@@ -16,12 +16,14 @@ struct GoalsView: View {
 
             case .loaded(let weekly, let monthly, let yearly):
                 let isRolling = viewModel.settings.windowMode == .rolling
+                let unit = viewModel.settings.distanceUnit
                 List {
                     Section {
                         GoalRow(
                             title: isRolling ? "7-Day Rolling" : "Weekly",
                             progress: weekly,
-                            goalMiles: viewModel.settings.weeklyGoalMiles
+                            goalValue: viewModel.settings.weeklyGoalInUnit,
+                            unit: unit
                         ) {
                             editingGoal = .weekly
                         }
@@ -29,7 +31,8 @@ struct GoalsView: View {
                         GoalRow(
                             title: isRolling ? "30-Day Rolling" : "Monthly",
                             progress: monthly,
-                            goalMiles: viewModel.settings.monthlyGoalMiles
+                            goalValue: viewModel.settings.monthlyGoalInUnit,
+                            unit: unit
                         ) {
                             editingGoal = .monthly
                         }
@@ -37,7 +40,8 @@ struct GoalsView: View {
                         GoalRow(
                             title: "Yearly",
                             progress: yearly,
-                            goalMiles: viewModel.settings.yearlyGoalMiles
+                            goalValue: viewModel.settings.yearlyGoalInUnit,
+                            unit: unit
                         ) {
                             editingGoal = .yearly
                         }
@@ -71,6 +75,18 @@ struct GoalsView: View {
                                 }
                             }
                         }
+
+                        Picker("Units", selection: Binding(
+                            get: { viewModel.settings.distanceUnit },
+                            set: { newValue in
+                                viewModel.settings.distanceUnit = newValue
+                                viewModel.saveSettings()
+                            }
+                        )) {
+                            ForEach(DistanceUnit.allCases, id: \.self) { unit in
+                                Text(unit.displayName).tag(unit)
+                            }
+                        }
                     } header: {
                         Text("Settings")
                     } footer: {
@@ -100,12 +116,13 @@ struct GoalsView: View {
         .sheet(item: $editingGoal) { goalType in
             EditGoalSheet(
                 goalType: goalType,
-                currentMiles: currentMiles(for: goalType),
-                onSave: { newMiles in
-                    setGoal(goalType, miles: newMiles)
+                currentValue: currentGoalValue(for: goalType),
+                unit: viewModel.settings.distanceUnit,
+                onSave: { newValue in
+                    setGoal(goalType, value: newValue)
                 },
-                onSaveAllFromYearly: goalType == .yearly ? { yearlyMiles in
-                    setAllGoalsFromYearly(yearlyMiles)
+                onSaveAllFromYearly: goalType == .yearly ? { yearlyValue in
+                    setAllGoalsFromYearly(yearlyValue)
                 } : nil
             )
             .presentationDetents([.height(goalType == .yearly ? 280 : 200)])
@@ -115,31 +132,31 @@ struct GoalsView: View {
         }
     }
 
-    private func currentMiles(for goalType: GoalType) -> Double? {
+    private func currentGoalValue(for goalType: GoalType) -> Double? {
         switch goalType {
-        case .weekly: return viewModel.settings.weeklyGoalMiles
-        case .monthly: return viewModel.settings.monthlyGoalMiles
-        case .yearly: return viewModel.settings.yearlyGoalMiles
+        case .weekly: return viewModel.settings.weeklyGoalInUnit
+        case .monthly: return viewModel.settings.monthlyGoalInUnit
+        case .yearly: return viewModel.settings.yearlyGoalInUnit
         }
     }
 
-    private func setGoal(_ goalType: GoalType, miles: Double?) {
+    private func setGoal(_ goalType: GoalType, value: Double?) {
         switch goalType {
-        case .weekly: viewModel.settings.weeklyGoalMiles = miles
-        case .monthly: viewModel.settings.monthlyGoalMiles = miles
-        case .yearly: viewModel.settings.yearlyGoalMiles = miles
+        case .weekly: viewModel.settings.weeklyGoalInUnit = value
+        case .monthly: viewModel.settings.monthlyGoalInUnit = value
+        case .yearly: viewModel.settings.yearlyGoalInUnit = value
         }
         viewModel.saveSettings()
     }
 
-    private func setAllGoalsFromYearly(_ yearlyMiles: Double?) {
-        viewModel.settings.yearlyGoalMiles = yearlyMiles
-        if let yearly = yearlyMiles {
-            viewModel.settings.monthlyGoalMiles = yearly / 12
-            viewModel.settings.weeklyGoalMiles = yearly / 52
+    private func setAllGoalsFromYearly(_ yearlyValue: Double?) {
+        viewModel.settings.yearlyGoalInUnit = yearlyValue
+        if let yearly = yearlyValue {
+            viewModel.settings.monthlyGoalInUnit = yearly / 12
+            viewModel.settings.weeklyGoalInUnit = yearly / 52
         } else {
-            viewModel.settings.monthlyGoalMiles = nil
-            viewModel.settings.weeklyGoalMiles = nil
+            viewModel.settings.monthlyGoalInUnit = nil
+            viewModel.settings.weeklyGoalInUnit = nil
         }
         viewModel.saveSettings()
     }
@@ -164,7 +181,8 @@ enum GoalType: String, Identifiable {
 struct GoalRow: View {
     let title: String
     let progress: GoalProgress?
-    let goalMiles: Double?
+    let goalValue: Double?
+    let unit: DistanceUnit
     let onTap: () -> Void
 
     var body: some View {
@@ -178,7 +196,7 @@ struct GoalRow: View {
                     if let progress, progress.isComplete {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                    } else if goalMiles != nil {
+                    } else if goalValue != nil {
                         Image(systemName: "chevron.right")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
@@ -190,12 +208,12 @@ struct GoalRow: View {
                         .tint(progress.isComplete ? .green : .accentColor)
 
                     HStack {
-                        Text(String(format: "%.1f / %.1f miles", progress.displayCurrentMiles, progress.displayGoalMiles))
+                        Text(String(format: "%.1f / %.1f %@", progress.displayCurrent(in: unit), progress.displayGoal(in: unit), unit.abbreviation))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         if !progress.isComplete {
-                            Text(String(format: "%.1f to go", progress.displayRemainingMiles))
+                            Text(String(format: "%.1f to go", progress.displayRemaining(in: unit)))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -222,12 +240,13 @@ struct GoalRow: View {
 /// Sheet for editing a single goal.
 struct EditGoalSheet: View {
     let goalType: GoalType
-    let currentMiles: Double?
+    let currentValue: Double?
+    let unit: DistanceUnit
     let onSave: (Double?) -> Void
     let onSaveAllFromYearly: ((Double?) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
-    @State private var milesText: String = ""
+    @State private var valueText: String = ""
     @State private var setAllGoals: Bool = false
     @FocusState private var isFocused: Bool
 
@@ -236,13 +255,13 @@ struct EditGoalSheet: View {
     }
 
     private var calculatedMonthly: Double? {
-        guard let miles = Double(milesText) else { return nil }
-        return miles / 12
+        guard let value = Double(valueText) else { return nil }
+        return value / 12
     }
 
     private var calculatedWeekly: Double? {
-        guard let miles = Double(milesText) else { return nil }
-        return miles / 52
+        guard let value = Double(valueText) else { return nil }
+        return value / 52
     }
 
     var body: some View {
@@ -250,10 +269,10 @@ struct EditGoalSheet: View {
             Form {
                 Section {
                     HStack {
-                        TextField("Goal", text: $milesText)
+                        TextField("Goal", text: $valueText)
                             .keyboardType(.decimalPad)
                             .focused($isFocused)
-                        Text("miles")
+                        Text(unit.abbreviation)
                             .foregroundStyle(.secondary)
                     }
                 } footer: {
@@ -265,7 +284,7 @@ struct EditGoalSheet: View {
                         Toggle("Also set weekly & monthly", isOn: $setAllGoals)
                     } footer: {
                         if setAllGoals, let monthly = calculatedMonthly, let weekly = calculatedWeekly {
-                            Text("Monthly: \(String(format: "%.1f", monthly)) mi · Weekly: \(String(format: "%.1f", weekly)) mi")
+                            Text("Monthly: \(String(format: "%.1f", monthly)) \(unit.abbreviation) · Weekly: \(String(format: "%.1f", weekly)) \(unit.abbreviation)")
                         }
                     }
                 }
@@ -285,24 +304,24 @@ struct EditGoalSheet: View {
                 }
             }
             .onAppear {
-                milesText = currentMiles.map { formatMiles($0) } ?? ""
+                valueText = currentValue.map { formatValue($0) } ?? ""
                 isFocused = true
             }
         }
     }
 
     private func save() {
-        let miles = Double(milesText)
+        let value = Double(valueText)
         if setAllGoals, let saveAll = onSaveAllFromYearly {
-            saveAll(miles)
+            saveAll(value)
         } else {
-            onSave(miles)
+            onSave(value)
         }
         dismiss()
     }
 
-    /// Formats miles, showing decimals only if needed.
-    private func formatMiles(_ value: Double) -> String {
+    /// Formats value, showing decimals only if needed.
+    private func formatValue(_ value: Double) -> String {
         let rounded = (value * 10).rounded() / 10
         if rounded == rounded.rounded() {
             return String(format: "%.0f", rounded)

@@ -23,15 +23,26 @@ final class DashboardViewModel {
 
     private let healthKitClient: HealthKitClient
     private let aggregator: DistanceAggregator
+    private let goalStore: GoalStore
 
     /// Returns true if the selected year is the current year (showing YTD data).
     var isCurrentYear: Bool {
         selectedYear == Calendar.current.component(.year, from: Date())
     }
 
-    init(healthKitClient: HealthKitClient, aggregator: DistanceAggregator = DistanceAggregator()) {
+    /// The current distance unit from settings.
+    var distanceUnit: DistanceUnit {
+        goalStore.load().distanceUnit
+    }
+
+    init(
+        healthKitClient: HealthKitClient,
+        aggregator: DistanceAggregator = DistanceAggregator(),
+        goalStore: GoalStore = UserDefaultsGoalStore()
+    ) {
         self.healthKitClient = healthKitClient
         self.aggregator = aggregator
+        self.goalStore = goalStore
         self.selectedYear = Calendar.current.component(.year, from: Date())
     }
 

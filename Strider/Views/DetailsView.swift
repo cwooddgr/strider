@@ -46,7 +46,8 @@ struct DetailsView: View {
     }
 
     private func workoutsList(_ workouts: [Workout]) -> some View {
-        List {
+        let unit = viewModel.distanceUnit
+        return List {
             Section {
                 EmptyView()
             } header: {
@@ -61,7 +62,8 @@ struct DetailsView: View {
                     ForEach(group.workouts) { workout in
                         WorkoutRow(
                             workout: workout,
-                            timeString: viewModel.timeString(for: workout.startDate)
+                            timeString: viewModel.timeString(for: workout.startDate),
+                            unit: unit
                         )
                     }
                 }
@@ -85,6 +87,7 @@ struct DetailsView: View {
 struct WorkoutRow: View {
     let workout: Workout
     let timeString: String
+    let unit: DistanceUnit
 
     var body: some View {
         HStack(spacing: 12) {
@@ -104,7 +107,7 @@ struct WorkoutRow: View {
 
             Spacer()
 
-            Text(String(format: "%.1f mi", workout.distanceMiles))
+            Text(String(format: "%.1f %@", workout.distance(in: unit), unit.abbreviation))
                 .font(.body)
                 .fontWeight(.medium)
                 .foregroundStyle(.primary)

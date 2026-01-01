@@ -15,10 +15,17 @@ final class DetailsViewModel {
     private(set) var lastRefreshed: Date?
 
     private let healthKitClient: HealthKitClient
+    private let goalStore: GoalStore
     private let calendar = Calendar.current
 
-    init(healthKitClient: HealthKitClient) {
+    /// The current distance unit from settings.
+    var distanceUnit: DistanceUnit {
+        goalStore.load().distanceUnit
+    }
+
+    init(healthKitClient: HealthKitClient, goalStore: GoalStore = UserDefaultsGoalStore()) {
         self.healthKitClient = healthKitClient
+        self.goalStore = goalStore
     }
 
     /// Loads recent workouts from the last 30 days.

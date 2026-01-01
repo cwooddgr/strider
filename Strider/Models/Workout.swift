@@ -13,6 +13,11 @@ struct Workout: Identifiable, Equatable {
         distanceMeters / 1609.344
     }
 
+    /// Distance in the specified unit.
+    func distance(in unit: DistanceUnit) -> Double {
+        unit.fromMeters(distanceMeters)
+    }
+
     /// Creates a Workout from an HKWorkout.
     /// Returns nil if the workout type isn't tracked or has no distance.
     init?(healthKitWorkout: HKWorkout) {

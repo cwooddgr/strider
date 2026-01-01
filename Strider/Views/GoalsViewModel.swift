@@ -5,16 +5,38 @@ struct GoalProgress: Equatable {
     let currentMeters: Double
     let goalMeters: Double
 
-    var currentMiles: Double { currentMeters / 1609.344 }
-    var goalMiles: Double { goalMeters / 1609.344 }
-    var remainingMiles: Double { max(goalMiles - currentMiles, 0) }
     var progress: Double { goalMeters > 0 ? min(currentMeters / goalMeters, 1.0) : 0 }
     var isComplete: Bool { currentMeters >= goalMeters }
 
-    // Display values rounded to 1 decimal place, ensuring they add up correctly
-    var displayCurrentMiles: Double { (currentMiles * 10).rounded() / 10 }
-    var displayGoalMiles: Double { (goalMiles * 10).rounded() / 10 }
-    var displayRemainingMiles: Double { max(displayGoalMiles - displayCurrentMiles, 0) }
+    /// Current distance in the specified unit.
+    func current(in unit: DistanceUnit) -> Double {
+        unit.fromMeters(currentMeters)
+    }
+
+    /// Goal distance in the specified unit.
+    func goal(in unit: DistanceUnit) -> Double {
+        unit.fromMeters(goalMeters)
+    }
+
+    /// Remaining distance in the specified unit.
+    func remaining(in unit: DistanceUnit) -> Double {
+        max(goal(in: unit) - current(in: unit), 0)
+    }
+
+    /// Display current rounded to 1 decimal place.
+    func displayCurrent(in unit: DistanceUnit) -> Double {
+        (current(in: unit) * 10).rounded() / 10
+    }
+
+    /// Display goal rounded to 1 decimal place.
+    func displayGoal(in unit: DistanceUnit) -> Double {
+        (goal(in: unit) * 10).rounded() / 10
+    }
+
+    /// Display remaining that adds up correctly with displayCurrent.
+    func displayRemaining(in unit: DistanceUnit) -> Double {
+        max(displayGoal(in: unit) - displayCurrent(in: unit), 0)
+    }
 }
 
 /// View state for goals screen.

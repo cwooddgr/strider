@@ -15,12 +15,14 @@ struct DashboardView: View {
                     ProgressView("Loading workouts...")
 
                 case .loaded(let summary):
+                    let unit = viewModel.distanceUnit
                     ScrollView {
                         VStack(spacing: 16) {
                             ForEach(WorkoutType.allCases, id: \.self) { type in
                                 DistanceCard(
                                     title: type.displayName,
-                                    miles: summary.miles(for: type),
+                                    distance: summary.distance(for: type, in: unit),
+                                    unit: unit,
                                     isYTD: viewModel.isCurrentYear
                                 )
                             }
@@ -30,7 +32,8 @@ struct DashboardView: View {
 
                             DistanceCard(
                                 title: "Total",
-                                miles: summary.totalMiles,
+                                distance: summary.totalDistance(in: unit),
+                                unit: unit,
                                 isTotal: true,
                                 isYTD: viewModel.isCurrentYear
                             )
@@ -93,7 +96,8 @@ struct DashboardView: View {
 /// A card displaying distance for a workout type.
 struct DistanceCard: View {
     let title: String
-    let miles: Double
+    let distance: Double
+    let unit: DistanceUnit
     var isTotal: Bool = false
     var isYTD: Bool = true
 
@@ -103,12 +107,12 @@ struct DistanceCard: View {
                 .font(isTotal ? .headline : .subheadline)
                 .foregroundStyle(.secondary)
 
-            Text(formattedMiles)
+            Text(formattedDistance)
                 .font(isTotal ? .largeTitle : .title)
                 .fontWeight(.bold)
                 .contentTransition(.numericText())
 
-            Text(isYTD ? "miles YTD" : "miles")
+            Text(isYTD ? "\(unit.abbreviation) YTD" : unit.abbreviation)
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
@@ -118,8 +122,8 @@ struct DistanceCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    private var formattedMiles: String {
-        String(format: "%.1f", miles)
+    private var formattedDistance: String {
+        String(format: "%.1f", distance)
     }
 }
 

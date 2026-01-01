@@ -20,6 +20,11 @@ struct DistanceSummary: Equatable {
         meters(for: type) / 1609.344
     }
 
+    /// Returns distance for a specific workout type in the given unit.
+    func distance(for type: WorkoutType, in unit: DistanceUnit) -> Double {
+        unit.fromMeters(meters(for: type))
+    }
+
     /// Total meters across all workout types.
     var totalMeters: Double {
         metersByType.values.reduce(0, +)
@@ -28,6 +33,11 @@ struct DistanceSummary: Equatable {
     /// Total miles across all workout types.
     var totalMiles: Double {
         totalMeters / 1609.344
+    }
+
+    /// Total distance across all workout types in the given unit.
+    func totalDistance(in unit: DistanceUnit) -> Double {
+        unit.fromMeters(totalMeters)
     }
 
     /// An empty summary with zero distance.
