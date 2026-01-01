@@ -48,7 +48,7 @@ struct GoalsView: View {
                     }
 
                     Section {
-                        Picker("Window Mode", selection: Binding(
+                        Picker("Goal Periods", selection: Binding(
                             get: { viewModel.settings.windowMode },
                             set: { newValue in
                                 viewModel.settings.windowMode = newValue
