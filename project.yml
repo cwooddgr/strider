@@ -20,7 +20,7 @@ targets:
       base:
         INFOPLIST_FILE: Strider/App/Info.plist
         CODE_SIGN_ENTITLEMENTS: Strider.entitlements
-        PRODUCT_BUNDLE_IDENTIFIER: com.strider.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.cwood.strider.app
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     entitlements:
       path: Strider.entitlements
