@@ -20,13 +20,17 @@ struct GoalSettings: Codable, Equatable {
     /// Distance unit for display.
     var distanceUnit: DistanceUnit
 
+    /// Appearance mode (light/dark/system).
+    var appearanceMode: AppearanceMode
+
     init(
         weeklyGoalMeters: Double? = nil,
         monthlyGoalMeters: Double? = nil,
         yearlyGoalMeters: Double? = nil,
         windowMode: WindowMode = .calendar,
         weekStart: WeekStart = .sunday,
-        distanceUnit: DistanceUnit = .miles
+        distanceUnit: DistanceUnit = .miles,
+        appearanceMode: AppearanceMode = .system
     ) {
         self.weeklyGoalMeters = weeklyGoalMeters
         self.monthlyGoalMeters = monthlyGoalMeters
@@ -34,6 +38,7 @@ struct GoalSettings: Codable, Equatable {
         self.windowMode = windowMode
         self.weekStart = weekStart
         self.distanceUnit = distanceUnit
+        self.appearanceMode = appearanceMode
     }
 
     // MARK: - Convenience accessors in miles (for compatibility)
@@ -110,6 +115,21 @@ enum WeekStart: String, Codable, CaseIterable {
         switch self {
         case .sunday: return 1
         case .monday: return 2
+        }
+    }
+}
+
+/// Appearance mode for the app.
+enum AppearanceMode: String, Codable, CaseIterable {
+    case system
+    case light
+    case dark
+
+    var displayName: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
         }
     }
 }

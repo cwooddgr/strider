@@ -87,6 +87,18 @@ struct GoalsView: View {
                                 Text(unit.displayName).tag(unit)
                             }
                         }
+
+                        Picker("Appearance", selection: Binding(
+                            get: { viewModel.settings.appearanceMode },
+                            set: { newValue in
+                                viewModel.settings.appearanceMode = newValue
+                                viewModel.saveSettings()
+                            }
+                        )) {
+                            ForEach(AppearanceMode.allCases, id: \.self) { mode in
+                                Text(mode.displayName).tag(mode)
+                            }
+                        }
                     } header: {
                         Text("Settings")
                     } footer: {

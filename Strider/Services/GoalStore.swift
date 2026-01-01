@@ -29,5 +29,7 @@ final class UserDefaultsGoalStore: GoalStore, @unchecked Sendable {
     func save(_ settings: GoalSettings) {
         guard let data = try? JSONEncoder().encode(settings) else { return }
         defaults.set(data, forKey: key)
+        // Sync appearance mode for @AppStorage observation
+        defaults.set(settings.appearanceMode.rawValue, forKey: "appearanceMode")
     }
 }

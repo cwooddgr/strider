@@ -3,6 +3,17 @@ import SwiftUI
 @main
 struct StriderApp: App {
     private let healthKitClient: HealthKitClient = LiveHealthKitClient()
+    private let goalStore: GoalStore = UserDefaultsGoalStore()
+
+    @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
+
+    private var colorScheme: ColorScheme? {
+        switch AppearanceMode(rawValue: appearanceMode) ?? .system {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -26,6 +37,7 @@ struct StriderApp: App {
                     Label("Details", systemImage: "list.bullet")
                 }
             }
+            .preferredColorScheme(colorScheme)
         }
     }
 }
