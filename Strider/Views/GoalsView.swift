@@ -192,12 +192,12 @@ struct GoalRow: View {
                         .tint(progress.isComplete ? .green : .accentColor)
 
                     HStack {
-                        Text(String(format: "%.1f / %.1f miles", progress.currentMiles, progress.goalMiles))
+                        Text(String(format: "%.1f / %.1f miles", progress.displayCurrentMiles, progress.displayGoalMiles))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         if !progress.isComplete {
-                            Text(String(format: "%.1f to go", progress.remainingMiles))
+                            Text(String(format: "%.1f to go", progress.displayRemainingMiles))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -286,7 +286,7 @@ struct EditGoalSheet: View {
                 }
             }
             .onAppear {
-                milesText = currentMiles.map { String(format: "%.0f", $0) } ?? ""
+                milesText = currentMiles.map { formatMiles($0) } ?? ""
                 isFocused = true
             }
         }
@@ -300,6 +300,16 @@ struct EditGoalSheet: View {
             onSave(miles)
         }
         dismiss()
+    }
+
+    /// Formats miles, showing decimals only if needed.
+    private func formatMiles(_ value: Double) -> String {
+        let rounded = (value * 10).rounded() / 10
+        if rounded == rounded.rounded() {
+            return String(format: "%.0f", rounded)
+        } else {
+            return String(format: "%.1f", rounded)
+        }
     }
 }
 

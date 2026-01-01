@@ -10,6 +10,11 @@ struct GoalProgress: Equatable {
     var remainingMiles: Double { max(goalMiles - currentMiles, 0) }
     var progress: Double { goalMeters > 0 ? min(currentMeters / goalMeters, 1.0) : 0 }
     var isComplete: Bool { currentMeters >= goalMeters }
+
+    // Display values rounded to 1 decimal place, ensuring they add up correctly
+    var displayCurrentMiles: Double { (currentMiles * 10).rounded() / 10 }
+    var displayGoalMiles: Double { (goalMiles * 10).rounded() / 10 }
+    var displayRemainingMiles: Double { max(displayGoalMiles - displayCurrentMiles, 0) }
 }
 
 /// View state for goals screen.
