@@ -48,15 +48,6 @@ struct DetailsView: View {
     private func workoutsList(_ workouts: [Workout]) -> some View {
         let unit = viewModel.distanceUnit
         return List {
-            Section {
-                EmptyView()
-            } header: {
-                Text("Last 30 Days")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .textCase(nil)
-            }
-
             ForEach(viewModel.workoutsByDay(workouts), id: \.date) { group in
                 Section(viewModel.sectionHeader(for: group.date)) {
                     ForEach(group.workouts) { workout in
@@ -66,15 +57,6 @@ struct DetailsView: View {
                             unit: unit
                         )
                     }
-                }
-            }
-
-            if let refreshedString = viewModel.lastRefreshedString {
-                Section {
-                    EmptyView()
-                } footer: {
-                    Text("Updated \(refreshedString)")
-                        .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
         }
@@ -90,13 +72,15 @@ struct WorkoutRow: View {
     let unit: DistanceUnit
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             Image(systemName: workout.type.iconName)
-                .font(.title2)
-                .foregroundStyle(Color.accentColor)
-                .frame(width: 32)
+                .font(.system(size: 20))
+                .foregroundStyle(Color.accentColor.opacity(0.9))
+                .frame(width: 40, height: 40)
+                .background(Color.accentColor.opacity(0.1))
+                .clipShape(Circle())
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(workout.type.displayName)
                     .font(.headline)
 
@@ -108,11 +92,11 @@ struct WorkoutRow: View {
             Spacer()
 
             Text(String(format: "%.1f %@", workout.distance(in: unit), unit.abbreviation))
-                .font(.body)
-                .fontWeight(.medium)
+                .font(.system(.body, design: .rounded))
+                .fontWeight(.semibold)
                 .foregroundStyle(.primary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 10)
     }
 }
 

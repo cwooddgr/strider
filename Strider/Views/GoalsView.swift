@@ -48,8 +48,6 @@ struct GoalsView: View {
                         ) {
                             editingGoal = .yearly
                         }
-                    } footer: {
-                        Text("Tap a goal to edit")
                     }
 
                     Section {
@@ -85,6 +83,7 @@ struct GoalsView: View {
                         Text(viewModel.settings.windowMode.description)
                     }
                 }
+                .listStyle(.insetGrouped)
                 .refreshable {
                     await viewModel.loadProgress()
                 }
@@ -188,13 +187,15 @@ struct GoalRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
+            HStack(spacing: 16) {
                 Image(systemName: iconName)
-                    .font(.title2)
-                    .foregroundStyle(Color.accentColor)
-                    .frame(width: 32)
+                    .font(.system(size: 22))
+                    .foregroundStyle(Color.accentColor.opacity(0.9))
+                    .frame(width: 44, height: 44)
+                    .background(Color.accentColor.opacity(0.1))
+                    .clipShape(Circle())
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text(title)
                             .font(.headline)
@@ -211,8 +212,17 @@ struct GoalRow: View {
                     }
 
                     if let progress {
-                        ProgressView(value: progress.progress)
-                            .tint(progress.isComplete ? .green : .accentColor)
+                        GeometryReader { geometry in
+                            Capsule()
+                                .fill(Color(.systemGray5))
+                                .frame(height: 6)
+                                .overlay(alignment: .leading) {
+                                    Capsule()
+                                        .fill(progress.isComplete ? Color.green : Color.accentColor)
+                                        .frame(width: geometry.size.width * min(progress.progress, 1.0))
+                                }
+                        }
+                        .frame(height: 6)
 
                         HStack {
                             Text(String(format: "%.1f / %.1f %@", progress.displayCurrent(in: unit), progress.displayGoal(in: unit), unit.abbreviation))
@@ -238,7 +248,7 @@ struct GoalRow: View {
                     }
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -17,7 +17,7 @@ struct DashboardView: View {
                 case .loaded(let summary):
                     let unit = viewModel.distanceUnit
                     ScrollView {
-                        VStack(spacing: 16) {
+                        VStack(spacing: 20) {
                             ForEach(WorkoutType.allCases, id: \.self) { type in
                                 DistanceCard(
                                     title: type.displayName,
@@ -29,7 +29,7 @@ struct DashboardView: View {
                             }
 
                             Divider()
-                                .padding(.vertical, 8)
+                                .padding(.vertical, 12)
 
                             DistanceCard(
                                 title: "Total",
@@ -40,7 +40,7 @@ struct DashboardView: View {
                                 isYTD: viewModel.isCurrentYear
                             )
                         }
-                        .padding()
+                        .padding(20)
                     }
                     .refreshable {
                         await viewModel.load()
@@ -61,7 +61,7 @@ struct DashboardView: View {
                     }
                 }
             }
-            .navigationTitle("Strider")
+            .navigationTitle("Summary")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -105,35 +105,39 @@ struct DistanceCard: View {
     var isYTD: Bool = true
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 20) {
             if let iconName {
                 Image(systemName: iconName)
-                    .font(isTotal ? .largeTitle : .title)
-                    .foregroundStyle(Color.accentColor)
-                    .frame(width: 44)
+                    .font(.system(size: isTotal ? 36 : 28))
+                    .foregroundStyle(Color.accentColor.opacity(0.9))
+                    .frame(width: 48)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(title)
-                    .font(isTotal ? .headline : .subheadline)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
 
                 Text(formattedDistance)
-                    .font(isTotal ? .largeTitle : .title)
+                    .font(.system(isTotal ? .largeTitle : .title, design: .rounded))
                     .fontWeight(.bold)
                     .contentTransition(.numericText())
 
                 Text(isYTD ? "\(unit.abbreviation) YTD" : unit.abbreviation)
-                    .font(.caption)
+                    .font(.footnote)
                     .foregroundStyle(.tertiary)
             }
 
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(isTotal ? Color.accentColor.opacity(0.1) : Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 4)
+        )
     }
 
     private var formattedDistance: String {

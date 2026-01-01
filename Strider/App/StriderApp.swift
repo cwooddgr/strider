@@ -20,7 +20,7 @@ struct StriderApp: App {
             TabView {
                 DashboardView(healthKitClient: healthKitClient)
                     .tabItem {
-                        Label("Dashboard", systemImage: "figure.walk")
+                        Label("Summary", systemImage: "figure.walk")
                     }
 
                 NavigationStack {

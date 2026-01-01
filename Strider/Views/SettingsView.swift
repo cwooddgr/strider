@@ -20,11 +20,7 @@ struct SettingsView: View {
                 .onChange(of: settings.distanceUnit) {
                     saveSettings()
                 }
-            } footer: {
-                Text("Distance unit for all screens")
-            }
 
-            Section {
                 Picker("Appearance", selection: $settings.appearanceMode) {
                     ForEach(AppearanceMode.allCases, id: \.self) { mode in
                         Text(mode.displayName).tag(mode)
@@ -33,10 +29,9 @@ struct SettingsView: View {
                 .onChange(of: settings.appearanceMode) {
                     saveSettings()
                 }
-            } footer: {
-                Text("App color scheme")
             }
         }
+        .listStyle(.insetGrouped)
         .navigationTitle("Settings")
     }
 
