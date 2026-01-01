@@ -41,8 +41,6 @@ struct GoalsView: View {
                         ) {
                             editingGoal = .yearly
                         }
-                    } header: {
-                        Text("Goals")
                     } footer: {
                         Text("Tap a goal to edit")
                     }
