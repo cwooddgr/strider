@@ -40,4 +40,12 @@ enum WorkoutType: String, CaseIterable, Hashable {
         case .run: return "Run"
         }
     }
+
+    var iconName: String {
+        switch self {
+        case .walk: return "figure.walk"
+        case .hike: return "figure.hiking"
+        case .run: return "figure.run"
+        }
+    }
 }

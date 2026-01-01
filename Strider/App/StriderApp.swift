@@ -18,6 +18,13 @@ struct StriderApp: App {
                 .tabItem {
                     Label("Goals", systemImage: "target")
                 }
+
+                NavigationStack {
+                    DetailsView(healthKitClient: healthKitClient)
+                }
+                .tabItem {
+                    Label("Details", systemImage: "list.bullet")
+                }
             }
         }
     }
