@@ -6,7 +6,19 @@ struct StriderApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DashboardView(healthKitClient: healthKitClient)
+            TabView {
+                DashboardView(healthKitClient: healthKitClient)
+                    .tabItem {
+                        Label("Dashboard", systemImage: "figure.walk")
+                    }
+
+                NavigationStack {
+                    GoalsView(healthKitClient: healthKitClient)
+                }
+                .tabItem {
+                    Label("Goals", systemImage: "target")
+                }
+            }
         }
     }
 }
