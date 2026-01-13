@@ -23,7 +23,7 @@ final class DetailsViewModel {
         goalStore.load().distanceUnit
     }
 
-    init(healthKitClient: HealthKitClient, goalStore: GoalStore = UserDefaultsGoalStore()) {
+    init(healthKitClient: HealthKitClient, goalStore: GoalStore = iCloudGoalStore.shared) {
         self.healthKitClient = healthKitClient
         self.goalStore = goalStore
     }

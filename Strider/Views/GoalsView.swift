@@ -4,8 +4,8 @@ struct GoalsView: View {
     @State private var viewModel: GoalsViewModel
     @State private var editingGoal: GoalType?
 
-    init(healthKitClient: HealthKitClient) {
-        _viewModel = State(wrappedValue: GoalsViewModel(healthKitClient: healthKitClient))
+    init(healthKitClient: HealthKitClient, goalStore: GoalStore = iCloudGoalStore.shared) {
+        _viewModel = State(wrappedValue: GoalsViewModel(healthKitClient: healthKitClient, goalStore: goalStore))
     }
 
     var body: some View {

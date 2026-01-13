@@ -4,7 +4,7 @@ struct SettingsView: View {
     @State private var settings: GoalSettings
     private let goalStore: GoalStore
 
-    init(goalStore: GoalStore = UserDefaultsGoalStore()) {
+    init(goalStore: GoalStore = iCloudGoalStore.shared) {
         self.goalStore = goalStore
         _settings = State(wrappedValue: goalStore.load())
     }
@@ -33,6 +33,11 @@ struct SettingsView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Settings")
+        .onReceive(NotificationCenter.default.publisher(for: .goalSettingsDidChangeExternally)) { notification in
+            if let newSettings = notification.userInfo?["settings"] as? GoalSettings {
+                settings = newSettings
+            }
+        }
     }
 
     private func saveSettings() {

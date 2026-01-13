@@ -38,7 +38,7 @@ final class DashboardViewModel {
     init(
         healthKitClient: HealthKitClient,
         aggregator: DistanceAggregator = DistanceAggregator(),
-        goalStore: GoalStore = UserDefaultsGoalStore()
+        goalStore: GoalStore = iCloudGoalStore.shared
     ) {
         self.healthKitClient = healthKitClient
         self.aggregator = aggregator

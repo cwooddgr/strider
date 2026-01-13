@@ -59,13 +59,31 @@ final class GoalsViewModel {
 
     init(
         healthKitClient: HealthKitClient,
-        goalStore: GoalStore = UserDefaultsGoalStore(),
+        goalStore: GoalStore = iCloudGoalStore.shared,
         aggregator: DistanceAggregator = DistanceAggregator()
     ) {
         self.healthKitClient = healthKitClient
         self.goalStore = goalStore
         self.aggregator = aggregator
         self.settings = goalStore.load()
+        observeExternalChanges()
+    }
+
+    // MARK: - iCloud Sync
+
+    private func observeExternalChanges() {
+        NotificationCenter.default.addObserver(
+            forName: .goalSettingsDidChangeExternally,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let newSettings = notification.userInfo?["settings"] as? GoalSettings else {
+                return
+            }
+            self.settings = newSettings
+            Task { await self.loadProgress() }
+        }
     }
 
     /// Saves current settings and reloads progress.

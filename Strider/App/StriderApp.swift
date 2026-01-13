@@ -3,7 +3,6 @@ import SwiftUI
 @main
 struct StriderApp: App {
     private let healthKitClient: HealthKitClient = LiveHealthKitClient()
-    private let goalStore: GoalStore = UserDefaultsGoalStore()
 
     @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
 
