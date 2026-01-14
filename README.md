@@ -27,11 +27,13 @@ A privacy-first iOS app that tracks your walking, hiking, and running distances 
 ### Settings
 - Switch between miles and kilometers
 - Light, dark, or system appearance mode
+- Settings sync across your devices via iCloud
 
 ### Privacy
-- All data stays on your device
+- Workout data stays on your device (read from HealthKit)
 - Read-only HealthKit access
-- No accounts, no cloud sync
+- No accounts required
+- Only preferences sync via iCloud
 
 ## Requirements
 
@@ -82,13 +84,13 @@ The app follows MVVM with a service layer:
 - **Services** - `HealthKitClient`, `DistanceAggregator`, `GoalStore`
 - **Views** - SwiftUI views with `@Observable` ViewModels
 
-All HealthKit access is abstracted behind protocols for testability. Settings are persisted via UserDefaults.
+All HealthKit access is abstracted behind protocols for testability. Settings sync via iCloud (NSUbiquitousKeyValueStore) with local UserDefaults fallback.
 
 ## License
 
 MIT License
 
-Copyright (c) 2025
+&copy; 2026 DGR Labs, LLC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
