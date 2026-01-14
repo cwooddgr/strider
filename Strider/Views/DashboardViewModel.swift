@@ -31,9 +31,7 @@ final class DashboardViewModel {
     }
 
     /// The current distance unit from settings.
-    var distanceUnit: DistanceUnit {
-        goalStore.load().distanceUnit
-    }
+    private(set) var distanceUnit: DistanceUnit
 
     init(
         healthKitClient: HealthKitClient,
@@ -44,6 +42,24 @@ final class DashboardViewModel {
         self.aggregator = aggregator
         self.goalStore = goalStore
         self.selectedYear = Calendar.current.component(.year, from: Date())
+        self.distanceUnit = goalStore.load().distanceUnit
+        observeExternalChanges()
+    }
+
+    // MARK: - iCloud Sync
+
+    private func observeExternalChanges() {
+        NotificationCenter.default.addObserver(
+            forName: .goalSettingsDidChangeExternally,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let newSettings = notification.userInfo?["settings"] as? GoalSettings else {
+                return
+            }
+            self.distanceUnit = newSettings.distanceUnit
+        }
     }
 
     /// Loads available years and workout data from HealthKit.

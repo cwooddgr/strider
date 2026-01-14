@@ -19,13 +19,29 @@ final class DetailsViewModel {
     private let calendar = Calendar.current
 
     /// The current distance unit from settings.
-    var distanceUnit: DistanceUnit {
-        goalStore.load().distanceUnit
-    }
+    private(set) var distanceUnit: DistanceUnit
 
     init(healthKitClient: HealthKitClient, goalStore: GoalStore = iCloudGoalStore.shared) {
         self.healthKitClient = healthKitClient
         self.goalStore = goalStore
+        self.distanceUnit = goalStore.load().distanceUnit
+        observeExternalChanges()
+    }
+
+    // MARK: - iCloud Sync
+
+    private func observeExternalChanges() {
+        NotificationCenter.default.addObserver(
+            forName: .goalSettingsDidChangeExternally,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let newSettings = notification.userInfo?["settings"] as? GoalSettings else {
+                return
+            }
+            self.distanceUnit = newSettings.distanceUnit
+        }
     }
 
     /// Loads recent workouts from the last 30 days.
