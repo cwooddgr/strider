@@ -123,7 +123,7 @@ final class GoalsViewModel {
 
             let (yearlyProgress, yearlyWorkouts) = try await fetchProgressWithWorkouts(
                 for: settings.yearlyGoalMeters,
-                dateRange: aggregator.ytdDateRange(from: now),
+                dateRange: yearDateRange(from: now),
                 types: allTypes
             )
 
@@ -188,6 +188,14 @@ final class GoalsViewModel {
             return rollingDateRange(days: 30, from: now)
         } else {
             return aggregator.currentMonthDateRange(from: now)
+        }
+    }
+
+    private func yearDateRange(from now: Date) -> (start: Date, end: Date) {
+        if settings.windowMode == .rolling {
+            return rollingDateRange(days: 365, from: now)
+        } else {
+            return aggregator.ytdDateRange(from: now)
         }
     }
 

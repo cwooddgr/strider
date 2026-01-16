@@ -27,7 +27,8 @@ struct GoalsView: View {
                             unit: unit,
                             iconName: GoalType.weekly.iconName,
                             daysRemaining: weeklyDays.days,
-                            includesToday: weeklyDays.includesToday
+                            includesToday: weeklyDays.includesToday,
+                            isRolling: isRolling
                         ) {
                             editingGoal = .weekly
                         }
@@ -40,20 +41,22 @@ struct GoalsView: View {
                             unit: unit,
                             iconName: GoalType.monthly.iconName,
                             daysRemaining: monthlyDays.days,
-                            includesToday: monthlyDays.includesToday
+                            includesToday: monthlyDays.includesToday,
+                            isRolling: isRolling
                         ) {
                             editingGoal = .monthly
                         }
 
                         let yearlyDays = daysRemaining(for: .yearly)
                         GoalRow(
-                            title: "Yearly",
+                            title: isRolling ? "365-Day Rolling" : "Yearly",
                             progress: yearly,
                             goalValue: viewModel.settings.yearlyGoalInUnit,
                             unit: unit,
                             iconName: GoalType.yearly.iconName,
                             daysRemaining: yearlyDays.days,
-                            includesToday: yearlyDays.includesToday
+                            includesToday: yearlyDays.includesToday,
+                            isRolling: isRolling
                         ) {
                             editingGoal = .yearly
                         }
@@ -194,9 +197,13 @@ struct GoalsView: View {
             }
 
         case .yearly:
-            let year = calendar.component(.year, from: now)
-            let startOfNextYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))!
-            return (max(calendar.dateComponents([.day], from: startDate, to: startOfNextYear).day ?? 1, 1), includesToday)
+            if viewModel.settings.windowMode == .rolling {
+                return (365, includesToday)
+            } else {
+                let year = calendar.component(.year, from: now)
+                let startOfNextYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))!
+                return (max(calendar.dateComponents([.day], from: startDate, to: startOfNextYear).day ?? 1, 1), includesToday)
+            }
         }
     }
 }
@@ -233,6 +240,7 @@ struct GoalRow: View {
     let iconName: String
     let daysRemaining: Int?
     let includesToday: Bool
+    let isRolling: Bool
     let onTap: () -> Void
 
     var body: some View {
@@ -287,11 +295,20 @@ struct GoalRow: View {
                         }
 
                         if !progress.isComplete, let days = daysRemaining, days > 0 {
-                            let avgNeeded = progress.displayRemaining(in: unit) / Double(days)
-                            let todayNote = includesToday ? " (incl today)" : ""
-                            Text(String(format: "%.1f %@/day%@ to reach goal", avgNeeded, unit.abbreviation, todayNote))
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
+                            if isRolling {
+                                // For rolling: show average needed to maintain goal (goal / window size)
+                                let avgToMaintain = progress.displayGoal(in: unit) / Double(days)
+                                Text(String(format: "%.1f %@/day to maintain goal", avgToMaintain, unit.abbreviation))
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            } else {
+                                // For calendar: show average needed to reach goal by end of period
+                                let avgNeeded = progress.displayRemaining(in: unit) / Double(days)
+                                let todayNote = includesToday ? " (incl today)" : ""
+                                Text(String(format: "%.1f %@/day%@ to reach goal", avgNeeded, unit.abbreviation, todayNote))
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
                         }
                     } else {
                         HStack {
