@@ -4,6 +4,8 @@ import UIKit
 /// Notification posted when goal settings are changed from another device via iCloud sync.
 extension Notification.Name {
     static let goalSettingsDidChangeExternally = Notification.Name("goalSettingsDidChangeExternally")
+    /// Notification posted when goal settings are changed locally.
+    static let goalSettingsDidChange = Notification.Name("goalSettingsDidChange")
 }
 
 /// iCloud-backed implementation of GoalStore using NSUbiquitousKeyValueStore.
@@ -45,6 +47,13 @@ final class iCloudGoalStore: GoalStore, @unchecked Sendable {
 
         local.save(settings)
         updateLastSyncedHash()
+
+        // Notify other parts of the app about the local change
+        NotificationCenter.default.post(
+            name: .goalSettingsDidChange,
+            object: nil,
+            userInfo: ["settings": settings]
+        )
     }
 
     // MARK: - Private

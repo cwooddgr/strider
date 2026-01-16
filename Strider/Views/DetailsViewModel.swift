@@ -28,19 +28,22 @@ final class DetailsViewModel {
         observeExternalChanges()
     }
 
-    // MARK: - iCloud Sync
+    // MARK: - Settings Changes
 
     private func observeExternalChanges() {
-        NotificationCenter.default.addObserver(
-            forName: .goalSettingsDidChangeExternally,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            guard let self,
-                  let newSettings = notification.userInfo?["settings"] as? GoalSettings else {
-                return
+        // Listen for both local and external (iCloud) settings changes
+        for name in [Notification.Name.goalSettingsDidChange, .goalSettingsDidChangeExternally] {
+            NotificationCenter.default.addObserver(
+                forName: name,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                guard let self,
+                      let newSettings = notification.userInfo?["settings"] as? GoalSettings else {
+                    return
+                }
+                self.distanceUnit = newSettings.distanceUnit
             }
-            self.distanceUnit = newSettings.distanceUnit
         }
     }
 
