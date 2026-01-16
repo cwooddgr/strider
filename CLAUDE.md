@@ -50,10 +50,12 @@ MVVM with a service layer. Key modules:
 - `weekStart`: sunday | monday
 
 ### Goals View
-- Shows progress bars and daily average needed to reach each goal
+- Shows progress bars and daily average needed to reach/maintain each goal
 - `daysRemaining` calculation includes today if no activity yet (encourages exercise)
 - `hasActivityToday` in ViewModel checks if any workout started today
-- Rolling mode uses fixed windows (7/30 days); calendar mode calculates actual days remaining
+- **Calendar mode**: Shows "X/day to reach goal" (remaining ÷ days left in period)
+- **Rolling mode**: Shows "X/day to maintain goal" (goal ÷ window size) for 7/30/365-day windows
+- Settings changes propagate via `.goalSettingsDidChange` notification (local) and `.goalSettingsDidChangeExternally` (iCloud)
 
 ### Units
 - Store/compute in **meters**
