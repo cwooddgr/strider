@@ -16,6 +16,8 @@ A privacy-first iOS app that tracks your walking, hiking, and running distances 
 ### Goals
 - Set weekly, monthly, and yearly distance goals
 - Track progress with visual progress bars
+- See daily average needed to reach each goal
+- Smart "incl today" indicator when you haven't exercised yet
 - Choose between calendar-aligned or rolling window modes
 - Configurable week start day (Sunday/Monday)
 

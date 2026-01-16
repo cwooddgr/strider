@@ -49,6 +49,12 @@ MVVM with a service layer. Key modules:
 - `windowMode`: calendar | rolling
 - `weekStart`: sunday | monday
 
+### Goals View
+- Shows progress bars and daily average needed to reach each goal
+- `daysRemaining` calculation includes today if no activity yet (encourages exercise)
+- `hasActivityToday` in ViewModel checks if any workout started today
+- Rolling mode uses fixed windows (7/30 days); calendar mode calculates actual days remaining
+
 ### Units
 - Store/compute in **meters**
 - Display in miles (US) or km based on locale
