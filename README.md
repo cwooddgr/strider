@@ -19,7 +19,7 @@ A privacy-first iOS app that tracks your walking, hiking, and running distances 
 - Choose between calendar-aligned or rolling window modes:
   - **Calendar**: Shows "X mi/day to reach goal" based on days remaining in period
   - **Rolling**: Shows "X mi/day to maintain goal" for 7/30/365-day windows
-- Smart "incl today" indicator when you haven't exercised yet (calendar mode)
+- Smart "including today" indicator when you haven't exercised yet (calendar mode)
 - Configurable week start day (Sunday/Monday)
 
 ### Details
