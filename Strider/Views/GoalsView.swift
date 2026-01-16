@@ -304,7 +304,7 @@ struct GoalRow: View {
                             } else {
                                 // For calendar: show average needed to reach goal by end of period
                                 let avgNeeded = progress.displayRemaining(in: unit) / Double(days)
-                                let todayNote = includesToday ? " (incl today)" : ""
+                                let todayNote = includesToday ? " (including today)" : ""
                                 Text(String(format: "%.1f %@/day%@ to reach goal", avgNeeded, unit.abbreviation, todayNote))
                                     .font(.caption)
                                     .foregroundStyle(.tertiary)
