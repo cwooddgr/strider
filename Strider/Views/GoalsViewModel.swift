@@ -51,6 +51,7 @@ enum GoalsState: Equatable {
 @Observable
 final class GoalsViewModel {
     private(set) var state: GoalsState = .loading
+    private(set) var hasActivityToday: Bool = false
     var settings: GoalSettings
 
     private let healthKitClient: HealthKitClient
@@ -101,6 +102,8 @@ final class GoalsViewModel {
 
             let allTypes = Set(WorkoutType.allCases)
             let now = Date()
+            let calendar = Calendar.current
+            let startOfToday = calendar.startOfDay(for: now)
 
             // Fetch workouts for each time period
             let weeklyProgress = try await fetchProgress(
@@ -115,11 +118,16 @@ final class GoalsViewModel {
                 types: allTypes
             )
 
-            let yearlyProgress = try await fetchProgress(
+            let (yearlyProgress, yearlyWorkouts) = try await fetchProgressWithWorkouts(
                 for: settings.yearlyGoalMeters,
                 dateRange: aggregator.ytdDateRange(from: now),
                 types: allTypes
             )
+
+            // Check if any workout started today
+            hasActivityToday = yearlyWorkouts.contains { workout in
+                calendar.isDate(workout.startDate, inSameDayAs: startOfToday)
+            }
 
             state = .loaded(weekly: weeklyProgress, monthly: monthlyProgress, yearly: yearlyProgress)
         } catch {
@@ -142,6 +150,23 @@ final class GoalsViewModel {
         let summary = aggregator.summarize(workouts)
 
         return GoalProgress(currentMeters: summary.totalMeters, goalMeters: goal)
+    }
+
+    private func fetchProgressWithWorkouts(
+        for goalMeters: Double?,
+        dateRange: (start: Date, end: Date),
+        types: Set<WorkoutType>
+    ) async throws -> (GoalProgress?, [Workout]) {
+        let workouts = try await healthKitClient.fetchWorkouts(
+            from: dateRange.start,
+            to: dateRange.end,
+            types: types
+        )
+
+        guard let goal = goalMeters else { return (nil, workouts) }
+
+        let summary = aggregator.summarize(workouts)
+        return (GoalProgress(currentMeters: summary.totalMeters, goalMeters: goal), workouts)
     }
 
     private func weekDateRange(from now: Date) -> (start: Date, end: Date) {

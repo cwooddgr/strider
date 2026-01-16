@@ -19,32 +19,41 @@ struct GoalsView: View {
                 let unit = viewModel.settings.distanceUnit
                 List {
                     Section {
+                        let weeklyDays = daysRemaining(for: .weekly)
                         GoalRow(
                             title: isRolling ? "7-Day Rolling" : "Weekly",
                             progress: weekly,
                             goalValue: viewModel.settings.weeklyGoalInUnit,
                             unit: unit,
-                            iconName: GoalType.weekly.iconName
+                            iconName: GoalType.weekly.iconName,
+                            daysRemaining: weeklyDays.days,
+                            includesToday: weeklyDays.includesToday
                         ) {
                             editingGoal = .weekly
                         }
 
+                        let monthlyDays = daysRemaining(for: .monthly)
                         GoalRow(
                             title: isRolling ? "30-Day Rolling" : "Monthly",
                             progress: monthly,
                             goalValue: viewModel.settings.monthlyGoalInUnit,
                             unit: unit,
-                            iconName: GoalType.monthly.iconName
+                            iconName: GoalType.monthly.iconName,
+                            daysRemaining: monthlyDays.days,
+                            includesToday: monthlyDays.includesToday
                         ) {
                             editingGoal = .monthly
                         }
 
+                        let yearlyDays = daysRemaining(for: .yearly)
                         GoalRow(
                             title: "Yearly",
                             progress: yearly,
                             goalValue: viewModel.settings.yearlyGoalInUnit,
                             unit: unit,
-                            iconName: GoalType.yearly.iconName
+                            iconName: GoalType.yearly.iconName,
+                            daysRemaining: yearlyDays.days,
+                            includesToday: yearlyDays.includesToday
                         ) {
                             editingGoal = .yearly
                         }
@@ -151,6 +160,45 @@ struct GoalsView: View {
         }
         viewModel.saveSettings()
     }
+
+    private func daysRemaining(for goalType: GoalType) -> (days: Int, includesToday: Bool) {
+        let calendar = Calendar.current
+        let now = Date()
+        let today = calendar.startOfDay(for: now)
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+
+        // Include today if user hasn't exercised yet today
+        let includesToday = !viewModel.hasActivityToday
+        let startDate = includesToday ? today : tomorrow
+
+        switch goalType {
+        case .weekly:
+            if viewModel.settings.windowMode == .rolling {
+                return (7, includesToday)
+            } else {
+                var cal = calendar
+                cal.firstWeekday = viewModel.settings.weekStart.calendarWeekday
+                let weekStart = cal.date(from: cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now))!
+                let weekEnd = cal.date(byAdding: .day, value: 7, to: weekStart)!
+                return (max(cal.dateComponents([.day], from: startDate, to: weekEnd).day ?? 1, 1), includesToday)
+            }
+
+        case .monthly:
+            if viewModel.settings.windowMode == .rolling {
+                return (30, includesToday)
+            } else {
+                let range = calendar.range(of: .day, in: .month, for: now)!
+                let currentDay = calendar.component(.day, from: now)
+                let daysLeft = includesToday ? (range.count - currentDay + 1) : (range.count - currentDay)
+                return (max(daysLeft, 1), includesToday)
+            }
+
+        case .yearly:
+            let year = calendar.component(.year, from: now)
+            let startOfNextYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))!
+            return (max(calendar.dateComponents([.day], from: startDate, to: startOfNextYear).day ?? 1, 1), includesToday)
+        }
+    }
 }
 
 /// Identifies which goal is being edited.
@@ -183,6 +231,8 @@ struct GoalRow: View {
     let goalValue: Double?
     let unit: DistanceUnit
     let iconName: String
+    let daysRemaining: Int?
+    let includesToday: Bool
     let onTap: () -> Void
 
     var body: some View {
@@ -234,6 +284,14 @@ struct GoalRow: View {
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
+                        }
+
+                        if !progress.isComplete, let days = daysRemaining, days > 0 {
+                            let avgNeeded = progress.displayRemaining(in: unit) / Double(days)
+                            let todayNote = includesToday ? " (incl today)" : ""
+                            Text(String(format: "%.1f %@/day%@ to reach goal", avgNeeded, unit.abbreviation, todayNote))
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
                         }
                     } else {
                         HStack {
